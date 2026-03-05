@@ -231,6 +231,7 @@ html, body, [data-testid="stAppViewContainer"] {
 # ── Snowflake connection ──────────────────────────────────────────────────────
 @st.cache_resource(show_spinner=False)
 def get_snowflake_connection():
+    """Create a Snowflake connection using st.secrets."""
     try:
         conn = snowflake.connector.connect(
             account=st.secrets["snowflake"]["account"],
@@ -308,7 +309,7 @@ def ingest_document(conn, filename: str, content: str, progress_cb=None) -> int:
             INSERT INTO DOCUMENTS (id, filename, chunk_index, content, embedding)
             SELECT
                 %s, %s, %s, %s,
-                SNOWFLAKE.CORTEX.EMBED_TEXT_1024('e5-base-v2', %s)
+                SNOWFLAKE.CORTEX.EMBED_TEXT_768('e5-base-v2', %s)
         """, [chunk_id, filename, i, chunk, chunk])
         inserted += 1
         if progress_cb:
@@ -321,7 +322,7 @@ def retrieve_context(conn, question: str, top_k: int = 5) -> List[Tuple[str, str
     """Vector similarity search. Returns list of (filename, content, score)."""
     cur = run_query(conn, """
         WITH query_embed AS (
-            SELECT SNOWFLAKE.CORTEX.EMBED_TEXT_1024('e5-base-v2', %s) AS emb
+            SELECT SNOWFLAKE.CORTEX.EMBED_TEXT_768('e5-base-v2', %s) AS emb
         )
         SELECT
             d.filename,
