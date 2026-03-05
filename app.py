@@ -231,7 +231,25 @@ html, body, [data-testid="stAppViewContainer"] {
 # ── Snowflake connection ──────────────────────────────────────────────────────
 @st.cache_resource(show_spinner=False)
 def get_snowflake_connection():
-    """Create a Snowflake connection using st.secrets."""
+    try:
+        conn = snowflake.connector.connect(
+            account=st.secrets["snowflake"]["account"],
+            user=st.secrets["snowflake"]["user"],
+            password=st.secrets["snowflake"]["password"],
+            warehouse=st.secrets["snowflake"]["warehouse"],
+            database=st.secrets["snowflake"]["database"],
+            schema=st.secrets["snowflake"]["schema"],
+            role=st.secrets.get("snowflake", {}).get("role", ""),
+        )
+        return conn
+    except Exception as e:
+        st.error(f"Snowflake error: {str(e)}")
+        return None
+
+
+"""
+@st.cache_resource(show_spinner=False)
+def get_snowflake_connection():
     try:
         conn = snowflake.connector.connect(
             account=st.secrets["snowflake"]["account"],
@@ -245,7 +263,7 @@ def get_snowflake_connection():
         return conn
     except Exception as e:
         return None
-
+"""
 def run_query(conn, query: str, params=None):
     """Execute a query and return results."""
     cur = conn.cursor()
